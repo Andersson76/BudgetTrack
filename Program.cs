@@ -8,6 +8,8 @@ namespace BudgetTrack
     {
         static void Main(string[] args)
         {
+            Console.OutputEncoding = System.Text.Encoding.UTF8;
+
             var manager = new BudgetManager();
 
             while (true)
@@ -16,8 +18,8 @@ namespace BudgetTrack
                 Console.WriteLine("1) Lägg till transaktion");
                 Console.WriteLine("2) Visa alla transaktioner");
                 Console.WriteLine("3) Visa total balans");
-                Console.WriteLine("4) Avsluta");
-                Console.Write("Val: ");
+                Console.WriteLine("4) Ta bort transaktion");
+                Console.WriteLine("5) Avsluta");
 
                 var choice = Console.ReadLine();
 
@@ -32,11 +34,17 @@ namespace BudgetTrack
                         break;
 
                     case "3":
-                        Console.WriteLine($"Balans: {manager.CalculateBalance():0.00}");
+                        var bal = manager.CalculateBalance();
+                        var color = bal >= 0 ? "green" : "red";
+                        AnsiConsole.MarkupLine($"Balans: [bold {color}]{bal:0.00}[/]");
                         break;
 
                     case "4":
-                        Console.WriteLine("Hejdå!");
+                        DeleteFlow(manager);
+                        break;
+
+                    case "5":
+                        Console.WriteLine("Tack och välkommen åter.");
                         return;
 
                     default:
@@ -44,6 +52,29 @@ namespace BudgetTrack
                         break;
                 }
             }
+        }
+        static void DeleteFlow(BudgetManager manager)
+        {
+            var list = manager.GetAll();
+            if (list.Count == 0)
+            {
+                AnsiConsole.MarkupLine("[yellow]Inga transaktioner att ta bort.[/]");
+                return;
+            }
+
+            // Skapa en lista med Id:n som val
+            var pick = AnsiConsole.Prompt(
+                new SelectionPrompt<string>()
+                    .Title("Välj [bold]Id[/] att ta bort:")
+                    .AddChoices(list.Select(t => $"{t.Id} – {t.Description} ({t.Amount:0.00})")));
+
+            // Extrahera Id (första delen före '–')
+            var idString = pick.Split('–')[0].Trim();
+
+            if (int.TryParse(idString, out int id) && manager.DeleteTransaction(id))
+                AnsiConsole.MarkupLine("[green]🗑️ Post borttagen.[/]");
+            else
+                AnsiConsole.MarkupLine("[red]Hittade ingen post med det Id:t.[/]");
         }
 
         static void AddTransactionFlow(BudgetManager manager)
