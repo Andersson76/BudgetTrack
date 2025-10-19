@@ -26,6 +26,8 @@ namespace BudgetTrack
                 Console.WriteLine("3) Visa total balans");
                 Console.WriteLine("4) Ta bort transaktion");
                 Console.WriteLine("5) Avsluta");
+                Console.WriteLine("6) Filtrera per kategori");
+                Console.WriteLine("7) Visa statistik");
                 Console.Write("Val: ");
 
                 var choice = Console.ReadLine();
@@ -53,6 +55,14 @@ namespace BudgetTrack
                     case "5":
                         Console.WriteLine("Tack och välkommen åter.");
                         return;
+
+                    case "6":
+                        FilterByCategoryFlow(manager);
+                        break;
+
+                    case "7":
+                        ShowStatistics(manager);
+                        break;
 
                     default:
                         Console.WriteLine("Ogiltigt val, försök igen.");
@@ -157,6 +167,65 @@ namespace BudgetTrack
             AnsiConsole.Write(table);
             AnsiConsole.Write(new Rule());
             AnsiConsole.MarkupLine($"Saldo: [bold {balanceColor}]{balance:0.00}[/]");
+        }
+        static void FilterByCategoryFlow(BudgetManager manager)
+        {
+            var cats = manager.GetDistinctCategories().ToList();
+            if (cats.Count == 0)
+            {
+                AnsiConsole.MarkupLine("[yellow]Inga kategorier ännu.[/]");
+                return;
+            }
+
+            var chosen = AnsiConsole.Prompt(
+                new SelectionPrompt<string>()
+                    .Title("Välj [bold]kategori[/]:")
+                    .AddChoices(cats));
+
+            var list = manager.GetByCategory(chosen);
+            if (list.Count == 0)
+            {
+                AnsiConsole.MarkupLine($"[yellow]Inga transaktioner i kategorin '{chosen}'.[/]");
+                return;
+            }
+
+            // återanvänd tabellrendering men för ett urval
+            var table = new Table().Border(TableBorder.Rounded)
+                                   .Title($"[bold underline]Transaktioner – {chosen}[/]");
+            table.AddColumn("Id");
+            table.AddColumn("Datum");
+            table.AddColumn("Kategori");
+            table.AddColumn(new TableColumn("Belopp").RightAligned());
+            table.AddColumn("Beskrivning");
+
+            foreach (var t in list)
+            {
+                var amountMarkup = t.Amount >= 0 ? $"[green]{t.Amount:0.00}[/]" : $"[red]{t.Amount:0.00}[/]";
+                table.AddRow(t.Id.ToString(), t.Date, t.Category, amountMarkup, t.Description);
+            }
+
+            var sum = list.Sum(t => t.Amount);
+            var sumColor = sum >= 0 ? "green" : "red";
+
+            AnsiConsole.Write(table);
+            AnsiConsole.Write(new Rule());
+            AnsiConsole.MarkupLine($"Summa för [bold]{chosen}[/]: [bold {sumColor}]{sum:0.00}[/]");
+        }
+
+        static void ShowStatistics(BudgetManager manager)
+        {
+            var (count, income, expense, balance) = manager.CalculateStats();
+
+            var panel = new Panel(
+                new Rows(
+                    new Markup($"Antal poster: [bold]{count}[/]"),
+                    new Markup($"Total inkomst: [bold green]{income:0.00}[/]"),
+                    new Markup($"Total utgift: [bold red]{expense:0.00}[/]"),
+                    new Markup($"Balans: [bold {(balance >= 0 ? "green" : "red")}]{balance:0.00}[/]")
+                )
+            ).Header("📊 Statistik", Justify.Center).Border(BoxBorder.Rounded);
+
+            AnsiConsole.Write(panel);
         }
     }
 }
