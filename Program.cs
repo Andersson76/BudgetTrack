@@ -12,6 +12,12 @@ namespace BudgetTrack
 
             var manager = new BudgetManager();
 
+            // Header
+            AnsiConsole.Write(
+                new FigletText("BudgetTrack")
+                    .Centered()
+                    .Color(Color.Aqua));
+
             while (true)
             {
                 Console.WriteLine("\n=== Personal Budget Tracker ===");
@@ -20,6 +26,7 @@ namespace BudgetTrack
                 Console.WriteLine("3) Visa total balans");
                 Console.WriteLine("4) Ta bort transaktion");
                 Console.WriteLine("5) Avsluta");
+                Console.Write("Val: ");
 
                 var choice = Console.ReadLine();
 
@@ -79,24 +86,33 @@ namespace BudgetTrack
 
         static void AddTransactionFlow(BudgetManager manager)
         {
-            Console.Write("Beskrivning: ");
-            var desc = Console.ReadLine() ?? "";
+            var desc = AnsiConsole.Prompt(
+                new TextPrompt<string>("Beskrivning:")
+                    .Validate(s => string.IsNullOrWhiteSpace(s)
+                        ? ValidationResult.Error("[red]Beskrivning krävs[/]")
+                        : ValidationResult.Success()));
 
-            Console.Write("Belopp (positivt = inkomst, negativt = utgift): ");
-            if (!decimal.TryParse(Console.ReadLine(), NumberStyles.Number, CultureInfo.InvariantCulture, out decimal amount))
-            {
-                Console.WriteLine("Fel: belopp måste vara ett tal.");
-                return;
-            }
+            var amount = AnsiConsole.Prompt(
+                new TextPrompt<decimal>("Belopp ([green]+[/] = inkomst, [red]-[/] = utgift):")
+                    .Validate(a => a == 0
+                        ? ValidationResult.Error("[red]Belopp kan inte vara 0[/]")
+                        : ValidationResult.Success()));
 
-            Console.Write("Kategori: ");
-            var cat = Console.ReadLine() ?? "";
+            var category = AnsiConsole.Prompt(
+                new TextPrompt<string>("Kategori (t.ex. Mat, Transport, Hyra, Inkomst):")
+                    .DefaultValue("Övrigt"));
 
-            Console.Write("Datum (YYYY-MM-DD): ");
-            var date = Console.ReadLine() ?? "";
+            var date = AnsiConsole.Prompt(
+                new TextPrompt<string>("Datum (YYYY-MM-DD):")
+                    .DefaultValue(DateTime.Now.ToString("yyyy-MM-dd"))
+                    .Validate(s =>
+                        DateTime.TryParseExact(s, "yyyy-MM-dd",
+                            CultureInfo.InvariantCulture, DateTimeStyles.None, out _)
+                            ? ValidationResult.Success()
+                            : ValidationResult.Error("[red]Fel format. Använd YYYY-MM-DD.[/]")));
 
-            manager.AddTransaction(desc, amount, cat, date);
-            Console.WriteLine("✅ Transaktion tillagd!");
+            manager.AddTransaction(desc, amount, category, date);
+            AnsiConsole.MarkupLine("[green]✅ Transaktion tillagd![/]");
         }
 
         static void RenderTable(BudgetManager manager)
