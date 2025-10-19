@@ -43,19 +43,15 @@ Användaren kan lägga till, visa, filtrera och ta bort transaktioner samt se ak
 
 ## Reflektionsfrågor
 
-**1. Vad har jag lärt mig under projektet?**  
-Jag har lärt mig att strukturera kod med klasser, använda listor för att lagra objekt och hur man filtrerar samt beräknar data med LINQ. Jag har även fördjupat förståelsen för OOP-principer som inkapsling och ansvarsfördelning.
+** Hur hjälpte klasser och metoder dig att organisera programmet? **  
+Klasser och metoder gjorde det mycket enklare att hålla koden strukturerad.  
+Genom att lägga logiken i `BudgetManager` och datan i `Transaction` kunde jag separera ansvar, återanvända kod och lättare förstå hur allt hänger ihop.  
+Metoderna hjälpte också till att göra koden mer läsbar och lätt att testa.
 
-**2. Vad gick bra?**  
-Att skapa metoder för att lägga till, ta bort och filtrera transaktioner gick smidigt. LINQ förenklade arbetet med listor.
+---
 
-**3. Vad kunde förbättras?**  
-Jag skulle kunna lägga till filhantering (spara/läsa från JSON eller CSV) så att transaktioner inte försvinner när programmet stängs.
-
-**4. Vad har jag lärt mig om felsökning?**  
-Att använda `Console.WriteLine()` för att logga mellanresultat hjälper mycket. Att bryta ner problem i mindre delar gör det lättare att hitta fel.
-
-**5. Vad är nästa steg?**  
-Att skapa ett enklare GUI (WinForms/WPF) och koppla till en databas för permanent lagring.
+** Vilken del av projektet var mest utmanande? **  
+Den mest utmanande delen var att få all funktionalitet att samspela korrekt, särskilt att hantera listan av transaktioner och kontrollera att borttagning och summering fungerade som tänkt.  
+Det tog lite tid att felsöka logiken, men det gav samtidigt en bättre förståelse för hur objekt och metoder interagerar.
 
 ---
