@@ -1,18 +1,53 @@
 ﻿using BudgetTrack;
 using System.Globalization;
 using Spectre.Console;
+using System.Linq;
 
 namespace BudgetTrack
 {
     internal class Program
     {
+        enum MenuChoice
+        {
+            Add, List, Balance, Delete, FilterByCategory, Stats, Exit
+        }
+
+        static MenuChoice AskMenu()
+        {
+            var choice = AnsiConsole.Prompt(
+                new SelectionPrompt<string>()
+                    .Title("[bold]Vad vill du göra?[/]")
+                    .PageSize(10)
+                    .HighlightStyle(new Style(foreground: Color.Aqua, decoration: Decoration.Bold))
+                    .AddChoices(new[]
+                    {
+                "➕ Lägg till transaktion",
+                "📋 Visa alla transaktioner",
+                "💰 Visa total balans",
+                "🗑️ Ta bort transaktion",
+                "🔎 Filtrera per kategori",
+                "📊 Visa statistik",
+                "❌ Avsluta"
+                    }));
+
+            return choice switch
+            {
+                "➕ Lägg till transaktion" => MenuChoice.Add,
+                "📋 Visa alla transaktioner" => MenuChoice.List,
+                "💰 Visa total balans" => MenuChoice.Balance,
+                "🗑️ Ta bort transaktion" => MenuChoice.Delete,
+                "🔎 Filtrera per kategori" => MenuChoice.FilterByCategory,
+                "📊 Visa statistik" => MenuChoice.Stats,
+                _ => MenuChoice.Exit
+            };
+        }
         static void Main(string[] args)
         {
             Console.OutputEncoding = System.Text.Encoding.UTF8;
 
             var manager = new BudgetManager();
 
-            // Header
+            // Header titel
             AnsiConsole.Write(
                 new FigletText("BudgetTrack")
                     .Centered()
@@ -20,52 +55,40 @@ namespace BudgetTrack
 
             while (true)
             {
-                Console.WriteLine("\n=== Personal Budget Tracker ===");
-                Console.WriteLine("1) Lägg till transaktion");
-                Console.WriteLine("2) Visa alla transaktioner");
-                Console.WriteLine("3) Visa total balans");
-                Console.WriteLine("4) Ta bort transaktion");
-                Console.WriteLine("5) Avsluta");
-                Console.WriteLine("6) Filtrera per kategori");
-                Console.WriteLine("7) Visa statistik");
-                Console.Write("Val: ");
+                AnsiConsole.Write(new Rule("[bold deepskyblue1]Personal Budget Tracker[/]").Centered());
 
-                var choice = Console.ReadLine();
-
-                switch (choice)
+                switch (AskMenu())
                 {
-                    case "1":
+                    case MenuChoice.Add:
                         AddTransactionFlow(manager);
                         break;
 
-                    case "2":
+                    case MenuChoice.List:
                         RenderTable(manager);
                         break;
 
-                    case "3":
-                        var bal = manager.CalculateBalance();
-                        var color = bal >= 0 ? "green" : "red";
-                        AnsiConsole.MarkupLine($"Balans: [bold {color}]{bal:0.00}[/]");
-                        break;
+                    case MenuChoice.Balance:
+                        {
+                            var bal = manager.CalculateBalance();
+                            var color = bal >= 0 ? "green" : "red";
+                            AnsiConsole.MarkupLine($"Balans: [bold {color}]{bal:0.00}[/]");
+                            break;
+                        }
 
-                    case "4":
+                    case MenuChoice.Delete:
                         DeleteFlow(manager);
                         break;
 
-                    case "5":
-                        Console.WriteLine("Tack och välkommen åter.");
+                    case MenuChoice.Exit:
+                        AnsiConsole.MarkupLine("[grey]Tack och välkommen åter![/]");
                         return;
 
-                    case "6":
+                    case MenuChoice.FilterByCategory:
                         FilterByCategoryFlow(manager);
                         break;
 
-                    case "7":
+                    case MenuChoice.Stats:
                         ShowStatistics(manager);
-                        break;
-
-                    default:
-                        Console.WriteLine("Ogiltigt val, försök igen.");
                         break;
                 }
             }
