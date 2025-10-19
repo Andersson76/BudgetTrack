@@ -1,5 +1,6 @@
 ﻿using BudgetTrack;
 using System.Globalization;
+using Spectre.Console;
 
 namespace BudgetTrack
 {
@@ -27,7 +28,7 @@ namespace BudgetTrack
                         break;
 
                     case "2":
-                        ListTransactions(manager);
+                        RenderTable(manager);
                         break;
 
                     case "3":
@@ -67,26 +68,48 @@ namespace BudgetTrack
             Console.WriteLine("✅ Transaktion tillagd!");
         }
 
-        static void ListTransactions(BudgetManager manager)
+        static void RenderTable(BudgetManager manager)
         {
-            var transactions = manager.GetAll();
+            var list = manager.GetAll();
 
-            if (transactions.Count == 0)
+            if (list.Count == 0)
             {
-                Console.WriteLine("Inga transaktioner ännu.");
+                AnsiConsole.MarkupLine("[yellow]Inga transaktioner ännu.[/]");
                 return;
             }
 
-            Console.WriteLine("\nId  Datum        Kategori      Belopp       Beskrivning");
-            Console.WriteLine("---------------------------------------------------------");
+            var table = new Table()
+                .Border(TableBorder.Rounded)
+                .Title("[bold underline]Transaktioner[/]");
 
-            foreach (var t in transactions)
+            table.AddColumn("Id");
+            table.AddColumn("Datum");
+            table.AddColumn("Kategori");
+            table.AddColumn(new TableColumn("Belopp").RightAligned());
+            table.AddColumn("Beskrivning");
+
+            foreach (var t in list)
             {
-                Console.WriteLine($"{t.Id,2}  {t.Date,-10}  {t.Category,-12}  {t.Amount,10:0.00}  {t.Description}");
+                // färga inkomster grönt, utgifter rött
+                var amountMarkup = t.Amount >= 0
+                    ? $"[green]{t.Amount:0.00}[/]"
+                    : $"[red]{t.Amount:0.00}[/]";
+
+                table.AddRow(
+                    t.Id.ToString(),
+                    t.Date,
+                    t.Category,
+                    amountMarkup,
+                    t.Description
+                );
             }
 
-            Console.WriteLine("---------------------------------------------------------");
-            Console.WriteLine($"Saldo: {manager.CalculateBalance():0.00}");
+            var balance = manager.CalculateBalance();
+            var balanceColor = balance >= 0 ? "green" : "red";
+
+            AnsiConsole.Write(table);
+            AnsiConsole.Write(new Rule());
+            AnsiConsole.MarkupLine($"Saldo: [bold {balanceColor}]{balance:0.00}[/]");
         }
     }
 }
